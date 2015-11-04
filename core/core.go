@@ -34,28 +34,27 @@ func CreateServers(serverType string, nb, latency int) []m.Search {
 }
 
 func Google(query string, nbReplicas, timeoutValue, latency int) (results m.Results) {
-	// We expect 3 results because we have 3 services: web, image and video
-	c := make(chan m.Result, 3)
 
-	// Create a pool of replica. Each service can search the web, images and videos
-	webServers := CreateServers("web", nbReplicas, latency)
-	imageServers := CreateServers("image", nbReplicas, latency)
-	videoServers := CreateServers("video", nbReplicas, latency)
+	services := []string{"web", "image", "video"}
 
-	// Find the first result from all the web servers
-	go func() { c <- First(query, webServers...) }()
-	// Find the first result from all the image servers
-	go func() { c <- First(query, imageServers...) }()
-	// Find the first result from all the video servers
-	go func() { c <- First(query, videoServers...) }()
+	// We expect a response from each service we have
+	resultChannel := make(chan m.Result, len(services))
+
+	// Run the search query on multiple instances of each service
+	for _, serviceName := range services {
+		servers := CreateServers(serviceName, nbReplicas, latency)
+		go func() {
+			resultChannel <- First(query, servers...)
+		}()
+	}
 
 	// Define the timeout for a search query
 	timeout := time.After(time.Duration(timeoutValue) * time.Millisecond)
 
-	// Go find a result for each service, or
+	// Go find a result for each service
 	for i := 0; i < 3; i++ {
 		select {
-		case result := <-c:
+		case result := <-resultChannel:
 			results = append(results, result)
 		// Exit if we've been waiting for too long to have a search result
 		case <-timeout:
