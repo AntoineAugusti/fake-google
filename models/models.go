@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"math/rand"
 	"time"
 )
@@ -28,9 +29,13 @@ type SearchServer struct {
 
 // Perform a search operation
 func (s SearchServer) Search(query string) Result {
+	stdDev := math.Sqrt(float64(s.latency) / 2)
+	// Normal law distribution for latency
+	latency := rand.NormFloat64()*stdDev + float64(s.latency)
 
+	// Count how much time it took to answer
 	start := time.Now()
-	time.Sleep(time.Duration(rand.Int31n(int32(s.latency))) * time.Millisecond)
+	time.Sleep(time.Duration(int32(latency)) * time.Millisecond)
 	elapsed := time.Since(start)
 
 	return Result{
