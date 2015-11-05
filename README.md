@@ -1,6 +1,6 @@
 [![Software License](http://img.shields.io/badge/License-MIT-orange.svg?style=flat-square)](https://github.com/AntoineAugusti/fake-google/LICENSE.md)
 # Fake Google
-This repository is for educational purpose only.
+This repository is for educational purpose only. It is heavily inspired by the talk [Go Concurrency Patterns](https://talks.golang.org/2012/concurrency.slide) by Rob Pike.
 
 The goal is to find a behaviour that could be used at Google to handle a search query. We have got 3 services (web, images and videos) and we want to perform a search on each service according to the query. The goal is to respond as fast as possible.
 
