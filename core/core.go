@@ -9,9 +9,18 @@ import (
 
 // Find the first result coming from a pool of search servers
 func First(query string, replicas ...m.Search) m.Result {
-	c := make(chan m.Result, len(replicas))
+	c := make(chan m.Result)
+	// Cancellation channel. See https://blog.golang.org/pipelines
+	done := make(chan struct{})
+	// Close that channel when this pipeline exits, as a signal
+	// for all the goroutines we started to exit.
+	defer close(done)
+
 	searchReplica := func(i int) {
-		c <- replicas[i].Search(query)
+		select {
+		case c <- replicas[i].Search(query):
+		case <-done:
+		}
 	}
 
 	for i := range replicas {
