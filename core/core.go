@@ -51,6 +51,10 @@ func Google(query string, nbReplicas, timeoutValue, latency int) (results m.Resu
 
 	// Run the search query on multiple instances of each service
 	for _, serviceName := range services {
+		// This is plain stupid: we don't want to "create" servers
+		// everytime we receive a search query. Instead we would
+		// likely fetch here the available servers for the given
+		// service
 		servers := CreateServers(serviceName, nbReplicas, latency)
 		go func() {
 			resultChannel <- First(query, servers...)
@@ -61,7 +65,7 @@ func Google(query string, nbReplicas, timeoutValue, latency int) (results m.Resu
 	timeout := time.After(time.Duration(timeoutValue) * time.Millisecond)
 
 	// Go find a result for each service
-	for i := 0; i < 3; i++ {
+	for i := 0; i < len(services); i++ {
 		select {
 		case result := <-resultChannel:
 			results = append(results, result)
